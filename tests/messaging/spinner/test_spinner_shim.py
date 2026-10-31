@@ -91,6 +91,23 @@ def test_update_spinner_context_never_raises(monkeypatch):
     update_spinner_context("info")  # must not raise
 
 
+def test_update_spinner_context_forwards_to_tab_title(monkeypatch):
+    """Context rides the same choke point so it stays visible scrolled-up."""
+    calls: list[str] = []
+    monkeypatch.setattr("code_puppy.messaging.tab_title.set_context", calls.append)
+    update_spinner_context("120/500 tokens (24%)")
+    assert calls == ["120/500 tokens (24%)"]
+
+
+def test_update_spinner_context_tab_title_dropped_for_subagents(monkeypatch):
+    """Same sub-agent guard as the bar: subagent context must not stomp it."""
+    calls: list[str] = []
+    monkeypatch.setattr("code_puppy.messaging.tab_title.set_context", calls.append)
+    monkeypatch.setattr("code_puppy.tools.subagent_context.is_subagent", lambda: True)
+    update_spinner_context("subagent context")
+    assert calls == []
+
+
 # =========================================================================
 # format_context_info (moved from SpinnerBase)
 # =========================================================================

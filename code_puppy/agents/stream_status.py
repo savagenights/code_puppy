@@ -1,6 +1,7 @@
 """Run-wide progress, independent of Markdown rendering and visibility."""
 
 import json
+import logging
 from weakref import WeakKeyDictionary, proxy
 
 from pydantic_ai import PartDeltaEvent, PartEndEvent, PartStartEvent
@@ -14,6 +15,8 @@ from pydantic_ai.messages import (
 )
 
 from code_puppy.i18n import t
+
+logger = logging.getLogger(__name__)
 
 
 _RUN_STATUSES = WeakKeyDictionary()
@@ -60,6 +63,14 @@ class StreamStatus:
         self.bar.set_tool_progress(
             t("stream.progress", count=f"{tokens:,}", activity=self.activity)
         )
+        try:
+            # Tab title rides the same paint path (bar None = subagent /
+            # non-persistent mode, so those never touch the title).
+            from code_puppy.messaging import tab_title
+
+            tab_title.set_activity(self.activity)
+        except Exception:
+            logger.debug("tab title activity update failed", exc_info=True)
 
     def update(self, event) -> None:
         if self.bar is None:

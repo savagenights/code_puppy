@@ -121,3 +121,22 @@ def test_no_bar_is_noop():
     status = StreamStatus(None)
     status.update(PartStartEvent(index=0, part=TextPart(content="ignored")))
     assert status.characters == 0
+
+
+def test_paint_forwards_activity_to_tab_title(monkeypatch):
+    """The tab title rides the paint path so activity is visible scrolled-up."""
+    calls: list[str] = []
+    monkeypatch.setattr("code_puppy.messaging.tab_title.set_activity", calls.append)
+    bar = Mock()
+    status = StreamStatus(bar)
+    status.update(PartStartEvent(index=0, part=ThinkingPart(content="123")))
+    assert calls and calls[-1] == "Thinking"
+
+
+def test_paint_without_bar_never_touches_tab_title(monkeypatch):
+    """bar=None means subagent / non-persistent mode — title stays put."""
+    calls: list[str] = []
+    monkeypatch.setattr("code_puppy.messaging.tab_title.set_activity", calls.append)
+    status = StreamStatus(None)
+    status.update(PartStartEvent(index=0, part=ThinkingPart(content="123")))
+    assert calls == []

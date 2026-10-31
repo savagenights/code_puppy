@@ -113,6 +113,14 @@ def update_spinner_context(info: str) -> None:
     except Exception:
         # Deprecated shim — must never take the app down.
         logger.debug("status forward failed", exc_info=True)
+    try:
+        # Tab title rides the same choke point (and sub-agent guard) so
+        # the context stays visible while the user is scrolled up.
+        from code_puppy.messaging import tab_title
+
+        tab_title.set_context(info or "")
+    except Exception:
+        logger.debug("tab title context update failed", exc_info=True)
 
 
 def clear_spinner_context() -> None:
